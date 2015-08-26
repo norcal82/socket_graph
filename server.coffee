@@ -1,30 +1,33 @@
-app     = require('express')()
+express = require('express')
+app     = express()
 server  = require('http').Server(app)
 io      = require('socket.io')(server)
 request = require('request')
-morgan = require('morgan')
+morgan  = require('morgan')
+mongoose = require('mongoose')
 
 base_uri = 'http://localhost:3000'
+mongo_uri = 'http://localhost:28017/serverStatus'
 index = '/'
-
+app.use("/scripts", express.static(__dirname + '/scripts'));
 # logging
 app.use(morgan('combined'))
-# mongoose = require('mongoose');
 
-# mongoose.connect('mongodb://localhost:27017/graph');
+mongoose.connect('mongodb://localhost:27017/graph');
 
-# db = mongoose.connection
-# db.on 'error', console.error.bind(console, 'connection error:')
-# db.once 'open', (callback) ->
-#   console.log "mongo connection"
+db = mongoose.connection
+db.on 'error', console.error.bind(console, 'connection error:')
+db.once 'open', (callback) ->
+  console.log "mongo connection"
 
-# Schema = mongoose.Schema;
+Schema = mongoose.Schema;
 
-# stationSchema = new mongoose.Schema({
-#     count: Number
-# });
+StationSchema = new Schema({
+    count: Number
+});
 
-# module.exports = mongoose.model('Station', stationSchema);
+module.exports = mongoose.model('Station', StationSchema);
+Station = mongoose.model('Station', StationSchema)
 
 bodyParser = require('body-parser');
 app.use(bodyParser.json()); # support json encoded bodies
@@ -61,17 +64,19 @@ app.get index, (req, res) ->
 
 # POSTS
 app.post '/api/station', (req, res) ->
-  # station = new Station
+  Station = mongoose.model('Station', '/models/station.js');
+  station = new Station
   station_id = req.body.id
   count      = req.body.count
-  # station.count = req.body.count
-  # save data
-  # station.save (err) ->
-  #   if err
-  #     res.send err
-  io.sockets.emit 'countRecieved', { _id: station_id, _count: count   }
-  res.json({_id: station_id, _message: "created station "+ station_id})
-
+  station.count = req.body.count
+  station.save (err) ->
+    if err
+      res.send err
+    io.sockets.emit 'countRecieved', { _id: station_id, _count: count   }
+    res.json({_id: station_id, _message: "created station "+ station_id})
+    station.find {}, (err, stations) ->
+        # do thangs
+      console.log(stations)
 
 # app.post 'log', (req, res) -> # creates a new log message
 #   data
