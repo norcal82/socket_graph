@@ -1,25 +1,34 @@
-express = require('express')
-app     = express()
-server  = require('http').Server(app)
-io      = require('socket.io')(server)
-request = require('request')
-morgan  = require('morgan')
+express  = require('express')
+app      = express()
+server   = require('http').Server(app)
+io       = require('socket.io')(server)
+request  = require('request')
+morgan   = require('morgan')
 mongoose = require('mongoose')
 
-base_uri = 'http://localhost:3000'
-mongo_uri = 'http://localhost:28017/serverStatus'
-index = '/'
+port_number  = process.argv[2] || 3000
+
+server.listen port_number
+console.log "listening on: " + port_number
+
+base_uri     = 'http://localhost:3000'
+mongodb_uri  = 'http://localhost:28017/serverStatus'
+index        = '/'
+
 app.use("/scripts", express.static(__dirname + '/scripts'));
+
 # logging
 app.use(morgan('combined'))
 
-mongoose.connect('mongodb://localhost:27017/graph');
+mongoose.connect('mongodb://localhost:27017/graph')
 
 db = mongoose.connection
 db.on 'error', console.error.bind(console, 'connection error:')
 db.once 'open', (callback) ->
   console.log "mongo connection"
 
+
+# move
 Schema = mongoose.Schema;
 
 StationSchema = new Schema({
@@ -29,14 +38,10 @@ StationSchema = new Schema({
 module.exports = mongoose.model('Station', StationSchema);
 Station = mongoose.model('Station', StationSchema)
 
+
 bodyParser = require('body-parser');
 app.use(bodyParser.json()); # support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); # support encoded bodies
-
-
-port_number = 3000
-server.listen port_number
-console.log "Sever started on port: " + port_number
 
 io.on 'connection', (socket) ->
   socket.emit 'startup', { server: 'ping' }
@@ -72,19 +77,12 @@ app.post '/api/station', (req, res) ->
   station.save (err) ->
     if err
       res.send err
-    io.sockets.emit 'countRecieved', { _id: station_id, _count: count   }
+    io.sockets.emit 'postRequest', { _id: station_id, _count: count   }
     res.json({_id: station_id, _message: "created station "+ station_id})
     station.find {}, (err, stations) ->
         # do thangs
       console.log(stations)
 
-# app.post 'log', (req, res) -> # creates a new log message
-#   data
-#     message: ''
-#     time: ''
-
-#   res.json data
-  # append to log file. logstalgia on production logs!
 
 #TODO: figure out routes
 # add logging helper for crud actions, socket stuff
@@ -97,6 +95,13 @@ postRequest1 = ->
 getRequest = ->
    request.get(base_uri + index)
 
-# setInterval(postRequest, 2000)
-# setInterval(postRequest1, 1500)
-# setInterval(getRequest, 1000)
+setInterval(postRequest, 2000)
+setInterval(postRequest1, 1500)
+setInterval(getRequest, 1000)
+
+request mongodb_uri, (error, response, body) ->
+  if !error and response.statusCode == 200
+    data = JSON.parse body
+    console.log data.host
+    console.log data.version
+    console.log data.uptime

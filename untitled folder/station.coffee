@@ -7,4 +7,5 @@ StationSchema = new Schema({
 });
 
 module.exports = mongoose.model('Station', StationSchema);
+
 Station = mongoose.model('Station', StationSchema)

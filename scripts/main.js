@@ -7,80 +7,82 @@
   });
 
   $(function() {
-    var chart, chart1, color_palette, del, generateChart, get, post, put, send, sensor_counts, sensor_counts1, waiting;
-    generateChart = function(target, data, color) {};
-    send = function() {
-      socket.emit('clieantMessage', 'whats up from send', navigator.platform);
-    };
-    waiting = function() {
-      $('pre').text('Waiting').css('color', 'dodgerblue').fadeIn('fast');
-    };
+    var CHART_MAX, color_palette, del, generateCharts, get, post, put, request_columns, sensor_columns, sensor_counts, sensor_counts1, updateChart;
+    CHART_MAX = 30;
     get = 0;
     post = 0;
     del = 0;
     put = 0;
     color_palette = ['#1abc9c', '#3498db', '#e74c3c', '#f39c12'];
-    socket.on('getRequest', function(data) {
-      console.log('get reuqest');
-      get = get + 1;
-      chart1.load({
-        columns: [['GET', get], ['POST', post], ['DELETE', del], ['PUT', put]]
-      });
-    });
-    socket.on('station_created', function(data) {
-      console.log('new station created and registered');
-      console.log(data);
-    });
+    request_columns = [['GET', get], ['POST', post], ['DELETE', del], ['PUT', put]];
     sensor_counts = ['station: 2'];
     sensor_counts1 = ['station: 5'];
-    socket.on('countRecieved', function(data) {
+    sensor_columns = [sensor_counts, sensor_counts1];
+    generateCharts;
+    socket.on('getRequest', function(data) {
+      get = get + 1;
+      console.log('get request');
+      console.log(data);
+      return updateChart(chart1, request_columns);
+    });
+    socket.on('postRequest', function(data) {
       post = post + 1;
-      chart1.load({
-        columns: [['GET', get], ['POST', post], ['DELETE', del], ['PUT', put]]
-      });
-      console.log('count is incremented');
+      console.log('post request');
       console.log(data);
       if (data._id === '2') {
         sensor_counts.push(data._count);
-        console.log('station 2');
-        if (sensor_counts.length === 30) {
-          console.log('arr is 5');
-          console.log(sensor_counts);
-          sensor_counts.splice(1, 1);
-          console.log(sensor_counts);
+        if (sensor_counts.length === CHART_MAX) {
+          return sensor_counts.splice(1, 1);
         }
       } else {
         sensor_counts1.push(data._count);
-        if (sensor_counts1.length === 30) {
+        if (sensor_counts1.length === CHART_MAX) {
           sensor_counts1.splice(1, 1);
+          return updateChart(chart, sensor_columns);
         }
       }
-      chart.load({
-        columns: [sensor_counts, sensor_counts1]
+    });
+    socket.on('station_created', function(data) {
+      console.log('new station created and registered');
+      return console.log(data);
+    });
+    socket.emit('startup', {
+      client: 'pong'
+    });
+    generateCharts = function() {
+      var chart, chart1;
+      chart = c3.generate({
+        data: {
+          columns: sensor_columns,
+          type: 'area-spline'
+        },
+        color: {
+          pattern: color_palette
+        }
       });
-    });
-    chart = c3.generate({
-      data: {
-        columns: [sensor_counts, sensor_counts1],
-        type: 'area-spline'
-      },
-      color: {
-        pattern: color_palette
-      }
-    });
-    chart1 = c3.generate({
-      bindto: '#chart1',
-      data: {
-        columns: [['GET', get], ['POST', post], ['DELETE', del], ['PUT', put]],
-        type: 'donut'
-      },
-      donut: {
-        title: 'HTTP Actions'
-      },
-      color: {
-        pattern: color_palette
-      }
-    });
+      return chart1 = c3.generate({
+        bindto: '#chart1',
+        data: {
+          columns: sensor_columns,
+          type: 'donut'
+        },
+        donut: {
+          title: 'HTTP Actions'
+        },
+        color: {
+          pattern: color_palette
+        }
+      });
+    };
+    return updateChart = function(chart, columns) {
+      return chart.load(columns);
+    };
   });
+
+  console.error($.extend({
+    arr: [1, 2, 3, 4]
+  }, {
+    types: 'this'
+  }));
 
 }).call(this);
