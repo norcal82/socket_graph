@@ -16,6 +16,14 @@
 
   mongoose = require('mongoose');
 
+  bodyParser = require('body-parser');
+
+  app.use(bodyParser.json());
+
+  app.use(bodyParser.urlencoded({
+    extended: true
+  }));
+
   port_number = process.argv[2] || 3000;
 
   server.listen(port_number);
@@ -28,7 +36,9 @@
 
   index = '/';
 
-  app.use("/scripts", express["static"](__dirname + '/scripts'));
+  app.use("/prod/css", express["static"](__dirname + '/prod/css'));
+
+  app.use("/prod/js", express["static"](__dirname + '/prod/js'));
 
   app.use(morgan('combined'));
 
@@ -52,14 +62,6 @@
 
   Station = mongoose.model('Station', StationSchema);
 
-  bodyParser = require('body-parser');
-
-  app.use(bodyParser.json());
-
-  app.use(bodyParser.urlencoded({
-    extended: true
-  }));
-
   io.on('connection', function(socket) {
     return socket.emit('startup', {
       server: 'ping'
@@ -68,7 +70,7 @@
 
   app.get(index, function(req, res) {
     io.sockets.emit('getRequest', {});
-    return res.sendFile(__dirname + '/index.html');
+    return res.sendFile(__dirname + '/prod/index.html');
   });
 
   app.post('/api/station', function(req, res) {
@@ -118,7 +120,7 @@
 
   setInterval(postRequest1, 1500);
 
-  setInterval(getRequest, 1000);
+  setInterval(getRequest, 3000);
 
   request(mongodb_uri, function(error, response, body) {
     var data;
