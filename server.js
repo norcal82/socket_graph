@@ -116,12 +116,6 @@
     return request.get(base_uri + index);
   };
 
-  setInterval(postRequest, 2000);
-
-  setInterval(postRequest1, 1500);
-
-  setInterval(getRequest, 3000);
-
   request(mongodb_uri, function(error, response, body) {
     var data;
     if (!error && response.statusCode === 200) {

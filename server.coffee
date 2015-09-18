@@ -91,7 +91,7 @@ getRequest = ->
    request.get(base_uri + index)
 
 setInterval(postRequest, 2000)
-setInterval(postRequest1, 1500)
+setInterval(postRequest1, 1000)
 setInterval(getRequest, 3000)
 
 request mongodb_uri, (error, response, body) ->

@@ -71,7 +71,7 @@ gulp.task 'js-concat', ->
 # Static server
 gulp.task 'browser-sync', ->
   browserSync
-    proxy: 'http://localhost:3000'
+    proxy: 'http://localhost:3003'
 
 
 gulp.task 'templates', ->
